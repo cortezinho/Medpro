@@ -1,0 +1,69 @@
+cadastro de medicos:
+
+{
+    "nome": "medico 1",
+    "email": "1@email.com",
+    "telefone": "11111111",
+    "crm": "111111",
+    "especialidade": "ORTOPEDIA",
+    "endereco":{
+      "logradouro": "rua 1",
+      "bairro": "bairro 1",
+      "cep": "11111111",
+      "cidade": "cidade 1",
+      "uf": "um",
+      "numero": "1",
+      "complemento": "um"
+		}
+}
+-------------------------------------------------------------------------
+{
+    "nome": "medico 2",
+    "email": "2@email.com",
+    "telefone": "22222222",
+    "crm": "222222",
+    "especialidade": "CARDIOLOGIA",
+    "endereco":{
+      "logradouro": "rua 2",
+      "bairro": "bairro 2",
+      "cep": "22222222",
+      "cidade": "cidade 2",
+      "uf": "do",
+      "numero": "2",
+      "complemento": "dois"
+		}
+}
+===========================================================================
+cadastro de pacientes:
+
+{
+    "nome": "paciente 1",
+    "email": "1@email.com",
+    "telefone": "11111111",
+    "cpf": "11111111111",
+    "endereco":{
+      "logradouro": "rua 1",
+      "bairro": "bairro 1",
+      "cep": "11111111",
+      "cidade": "cidade 1",
+      "uf": "um",
+      "numero": "1",
+      "complemento": "um"
+		}
+}
+-------------------------------------------------------------------------
+{
+    "nome": "paciente 2",
+    "email": "2@email.com",
+    "telefone": "22222222",
+    "cpf": "22222222222",
+    "endereco":{
+      "logradouro": "rua 2",
+      "bairro": "bairro 2",
+      "cep": "22222222",
+      "cidade": "cidade 2",
+      "uf": "do",
+      "numero": "2",
+      "complemento": "dois"
+		}
+}

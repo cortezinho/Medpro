@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
-  TextInput, 
   StyleSheet, 
   TouchableOpacity, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Nova importação
 import api from '../../services/api';
 
 const AgendamentoConsultaScreen = ({ navigation }) => {
@@ -18,7 +19,11 @@ const AgendamentoConsultaScreen = ({ navigation }) => {
   
   const [selectedPaciente, setSelectedPaciente] = useState('');
   const [selectedMedico, setSelectedMedico] = useState('');
-  const [dataHora, setDataHora] = useState(''); // Formato: AAAA-MM-DDTHH:mm
+  
+  // Estados para Data e Hora
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+  const [mode, setMode] = useState('date'); // 'date' ou 'time'
 
   useEffect(() => {
     carregarDados();
@@ -26,7 +31,6 @@ const AgendamentoConsultaScreen = ({ navigation }) => {
 
   const carregarDados = async () => {
     try {
-      // Busca médicos e pacientes para preencher os selects
       const [resPacientes, resMedicos] = await Promise.all([
         api.get('/pacientes?size=100'),
         api.get('/medicos?size=100')
@@ -40,25 +44,55 @@ const AgendamentoConsultaScreen = ({ navigation }) => {
     }
   };
 
+  // Função chamada quando o usuário escolhe uma data/hora no seletor
+  const onChangeData = (event, selectedDate) => {
+    const currentDate = selectedDate || dataSelecionada;
+    // No Android, o picker fecha após a seleção. No iOS precisa tratar diferente se quiser fechar manual.
+    setShowPicker(Platform.OS === 'ios'); 
+    setDataSelecionada(currentDate);
+  };
+
+  const showMode = (currentMode) => {
+    setShowPicker(true);
+    setMode(currentMode);
+  };
+
+  // Formata para mostrar na tela (Ex: 25/12/2025 às 14:30)
+  const getDataFormatadaVisual = () => {
+    return dataSelecionada.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Formata para enviar ao Backend (ISO: YYYY-MM-DDTHH:mm:ss)
+  const getDataFormatadaAPI = () => {
+    // Ajuste simples para fuso horário local ao enviar ISO string
+    // Ou usar bibliotecas como 'date-fns', mas aqui faremos manual para não instalar mais nada
+    const d = new Date(dataSelecionada);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 19);
+  };
+
   const handleAgendar = async () => {
-    if (!selectedPaciente || !selectedMedico || !dataHora) {
-      Alert.alert('Atenção', 'Selecione paciente, médico e informe a data.');
+    if (!selectedPaciente || !selectedMedico) {
+      Alert.alert('Atenção', 'Selecione paciente e médico.');
       return;
     }
 
-    // Validação básica de formato de data (YYYY-MM-DDTHH:mm)
-    // Exemplo: 2025-12-25T14:30
-    const regexData = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-    if (!regexData.test(dataHora)) {
-      Alert.alert('Formato Inválido', 'Use o formato: AAAA-MM-DDTHH:mm\nEx: 2025-12-25T14:30');
+    // Validação básica: Não permitir datas passadas
+    if (dataSelecionada < new Date()) {
+      Alert.alert('Erro', 'A data da consulta não pode ser no passado.');
       return;
     }
 
     const payload = {
       idPaciente: selectedPaciente,
       idMedico: selectedMedico,
-      data: dataHora,
-      // Especialidade é opcional se o médico já foi escolhido
+      data: getDataFormatadaAPI(), // Envia formato correto automaticamente
     };
 
     try {
@@ -106,13 +140,35 @@ const AgendamentoConsultaScreen = ({ navigation }) => {
       </View>
 
       <Text style={styles.label}>Data e Hora</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="AAAA-MM-DDTHH:mm"
-        value={dataHora}
-        onChangeText={setDataHora}
-      />
-      <Text style={styles.hint}>Exemplo: 2025-10-20T14:30</Text>
+      
+      {/* Botões para abrir o seletor */}
+      <View style={styles.dateRow}>
+        <TouchableOpacity style={styles.dateButton} onPress={() => showMode('date')}>
+          <Text style={styles.dateButtonText}>📅 Escolher Data</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.dateButton} onPress={() => showMode('time')}>
+          <Text style={styles.dateButtonText}>⏰ Escolher Hora</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Exibição visual da data escolhida */}
+      <Text style={styles.dataDisplay}>
+        Agendando para: {getDataFormatadaVisual()}
+      </Text>
+
+      {/* Componente do Seletor (Aparece condicionalmente) */}
+      {showPicker && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={dataSelecionada}
+          mode={mode}
+          is24Hour={true}
+          display="default"
+          onChange={onChangeData}
+          minimumDate={new Date()} // Impede selecionar datas passadas
+        />
+      )}
 
       <TouchableOpacity style={styles.button} onPress={handleAgendar}>
         <Text style={styles.buttonText}>Confirmar Agendamento</Text>
@@ -125,11 +181,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 30, textAlign: 'center', color: '#333' },
   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 5, color: '#555' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#f9f9f9' },
   pickerContainer: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 20, backgroundColor: '#f9f9f9', overflow: 'hidden' },
-  button: { backgroundColor: '#007AFF', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 30 },
+  
+  // Estilos novos para data
+  dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+  dateButton: { flex: 0.48, backgroundColor: '#e1f5fe', padding: 12, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: '#007AFF' },
+  dateButtonText: { color: '#007AFF', fontWeight: 'bold' },
+  dataDisplay: { textAlign: 'center', fontSize: 16, color: '#333', marginBottom: 20, padding: 10, backgroundColor: '#f0f0f0', borderRadius: 8 },
+
+  button: { backgroundColor: '#007AFF', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  hint: { color: '#888', fontSize: 12, marginTop: 5, marginBottom: 20 }
 });
 
 export default AgendamentoConsultaScreen;

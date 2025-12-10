@@ -1,4 +1,3 @@
-// src/screens/Medico/CadastroEdicaoMedicoScreen.js
 import React from 'react';
 import { Alert } from 'react-native';
 import MedicoForm from '../../components/MedicoForm';
@@ -6,7 +5,6 @@ import api from '../../services/api';
 
 const normalizeToEnum = (s) => {
   if (!s) return s;
-  // remove acentos e transforma em maiúsculas (ex: "Ginecologia" -> "GINECOLOGIA")
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 };
 
@@ -24,6 +22,7 @@ const CadastroEdicaoMedicoScreen = ({ route, navigation }) => {
         logradouro: dados.logradouro,
         numero: dados.numero,
         complemento: dados.complemento || '',
+        bairro: dados.bairro, // Adicionado pois é obrigatório
         cidade: dados.cidade,
         uf: dados.uf,
         cep: dados.cep
@@ -32,7 +31,6 @@ const CadastroEdicaoMedicoScreen = ({ route, navigation }) => {
   };
 
   const montarPayloadAtualizacao = (dados, id) => {
-    // O DTO de atualização no backend costuma aceitar id + campos mutáveis.
     return {
       id: id,
       nome: dados.nome,
@@ -41,6 +39,7 @@ const CadastroEdicaoMedicoScreen = ({ route, navigation }) => {
         logradouro: dados.logradouro,
         numero: dados.numero,
         complemento: dados.complemento || '',
+        bairro: dados.bairro,
         cidade: dados.cidade,
         uf: dados.uf,
         cep: dados.cep
@@ -51,22 +50,22 @@ const CadastroEdicaoMedicoScreen = ({ route, navigation }) => {
   const handleSave = async (dados) => {
     try {
       if (medico && medico.id) {
-        // EDITAR
+        // EDITAR (PUT)
         const payload = montarPayloadAtualizacao(dados, medico.id);
         await api.put('/medicos', payload);
         Alert.alert('Sucesso', 'Perfil atualizado com sucesso.');
       } else {
-        // CADASTRAR
+        // CADASTRAR (POST) - Rota corrigida para /medicos/cadastro
         const payload = montarPayloadCadastro(dados);
-        await api.post('/medicos', payload);
+        await api.post('/medicos/cadastro', payload);
         Alert.alert('Sucesso', 'Médico cadastrado com sucesso.');
       }
 
-      // volta para a lista; a Op1Screen foi ajustada para recarregar ao ganhar foco
       navigation.goBack();
     } catch (error) {
       console.log('Erro ao salvar médico:', error?.response ?? error);
-      const msg = error?.response?.data?.message || 'Erro ao salvar. Verifique os campos e tente novamente.';
+      // Mostra mensagem mais detalhada se houver
+      const msg = error?.response?.data?.message || JSON.stringify(error?.response?.data) || 'Erro ao salvar.';
       Alert.alert('Erro', msg);
     }
   };

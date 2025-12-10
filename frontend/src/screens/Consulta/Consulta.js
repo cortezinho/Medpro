@@ -5,12 +5,13 @@ import {
   FlatList, 
   StyleSheet, 
   ActivityIndicator,
-  Alert 
+  Alert,
+  Button // Importante para o botão de agendamento
 } from 'react-native';
 import api from '../../services/api';
 import { useIsFocused } from '@react-navigation/native';
 
-const Consulta = () => {
+const Consulta = ({ navigation }) => {
   const [consultas, setConsultas] = useState([]);
   const [loading, setLoading] = useState(true);
   const isFocused = useIsFocused();
@@ -65,6 +66,15 @@ const Consulta = () => {
 
   return (
     <View style={styles.container}>
+      {/* Botão de Agendamento */}
+      <View style={styles.buttonContainer}>
+        <Button 
+          title="Agendar Nova Consulta" 
+          color="#28a745"
+          onPress={() => navigation.navigate('AgendamentoConsulta')} 
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator size="large" color="#007AFF" />
       ) : (
@@ -81,6 +91,7 @@ const Consulta = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 10, backgroundColor: '#f5f5f5' },
+  buttonContainer: { marginBottom: 10 },
   card: {
     backgroundColor: '#fff',
     padding: 15,

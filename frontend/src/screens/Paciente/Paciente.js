@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   ActivityIndicator,
   Alert,
-  TouchableOpacity
+  TouchableOpacity,
+  Button // Importante para o botão de cadastro
 } from 'react-native';
 import api from '../../services/api';
 import { useIsFocused } from '@react-navigation/native';
@@ -64,6 +65,14 @@ const Paciente = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Botão de Cadastro */}
+      <View style={styles.buttonContainer}>
+        <Button 
+          title="Cadastrar Novo Paciente" 
+          onPress={() => navigation.navigate('CadastroPaciente')} 
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator size="large" color="#007AFF" />
       ) : (
@@ -80,6 +89,7 @@ const Paciente = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 10, backgroundColor: '#f5f5f5' },
+  buttonContainer: { marginBottom: 10 },
   card: {
     flexDirection: 'row',
     backgroundColor: '#fff',
